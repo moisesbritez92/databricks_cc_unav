@@ -1,29 +1,20 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # 🤖 Model Training & Evaluation - Sklearn Version
-# MAGIC 
+# MAGIC
 # MAGIC Este notebook entrena modelos usando **scikit-learn** en lugar de MLlib para evitar restricciones del cluster.
-# MAGIC 
+# MAGIC
 # MAGIC ## Modelos a entrenar:
 # MAGIC 1. **Random Forest Regressor** - Predicción de PM2.5
 # MAGIC 2. **Gradient Boosting Regressor** - Predicción de PM2.5  
 # MAGIC 3. **Random Forest Classifier** - Clasificación de categorías AQI
-# MAGIC 
+# MAGIC
 # MAGIC ## Tracking con MLflow ✅
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ## 1. Instalación y Setup
-
-# COMMAND ----------
-
-# Instalar scikit-learn si no está disponible
-#%pip install scikit-learn --quiet
-
-# COMMAND ----------
-
-#dbutils.library.restartPython()
 
 # COMMAND ----------
 
@@ -39,12 +30,13 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix
 from sklearn.preprocessing import LabelEncoder
 
-print("✅ Librerías importadas correctamente")
+print(" Librerías importadas correctamente")
 
 # COMMAND ----------
 
 # Configurar experimento MLflow
-mlflow.set_experiment("/Users/shared/air_quality_prediction")
+mlflow.set_registry_uri("databricks-uc")
+mlflow.set_experiment("/Users/mbritezigle@alumni.unav.es/air_quality_prediction")
 print(f"📊 MLflow Tracking URI: {mlflow.get_tracking_uri()}")
 
 # COMMAND ----------
@@ -558,183 +550,183 @@ print("="*70)
 
 # MAGIC %md
 # MAGIC ## 🎓 Discussion: Análisis de Resultados y Mejoras
-# MAGIC 
+# MAGIC
 # MAGIC ### 📊 1. Rendimiento de los Modelos
-# MAGIC 
+# MAGIC
 # MAGIC #### **Modelos de Regresión (PM2.5):**
-# MAGIC 
+# MAGIC
 # MAGIC **Random Forest Regressor:**
 # MAGIC - ✅ **R² alto** indica buena capacidad predictiva
 # MAGIC - ✅ **RMSE razonable** para la escala de PM2.5
 # MAGIC - ✅ Generaliza bien (métricas similares train/test)
-# MAGIC 
+# MAGIC
 # MAGIC **Gradient Boosting:**
 # MAGIC - 🔄 Rendimiento comparable a Random Forest
 # MAGIC - 🔄 Puede mejorar con más iteraciones
 # MAGIC - 🔄 Más sensible a hiperparámetros
-# MAGIC 
+# MAGIC
 # MAGIC #### **Modelo de Clasificación (Categorías AQI):**
 # MAGIC - ✅ Alta precisión en categorías frecuentes (Good, Moderate)
 # MAGIC - ⚠️ Posible desbalance en categorías raras (Hazardous)
 # MAGIC - ✅ F1-Score weighted compensa desbalances
-# MAGIC 
+# MAGIC
 # MAGIC ---
-# MAGIC 
+# MAGIC
 # MAGIC ### 🎯 2. Features Más Importantes
-# MAGIC 
+# MAGIC
 # MAGIC **Top 3 predictores (por feature importance):**
 # MAGIC 1. **pm25_lag_1h** - Valor de la hora anterior (fuerte autocorrelación)
 # MAGIC 2. **pm25_rolling_24h** - Tendencia de 24 horas
 # MAGIC 3. **pm25_lag_24h** - Patrón diario (mismo momento ayer)
-# MAGIC 
+# MAGIC
 # MAGIC **Insights:**
 # MAGIC - ✅ La contaminación tiene **fuerte componente temporal**
 # MAGIC - ✅ Variables meteorológicas tienen impacto moderado
 # MAGIC - ✅ Variables de tendencia (rolling) son cruciales
-# MAGIC 
+# MAGIC
 # MAGIC ---
-# MAGIC 
+# MAGIC
 # MAGIC ### ⚠️ 3. Limitaciones Identificadas
-# MAGIC 
+# MAGIC
 # MAGIC **Datos:**
 # MAGIC - 📍 **Una sola ubicación** (Beijing) - sesgo geográfico
 # MAGIC - 📅 **Periodo limitado** (2010-2014) - no captura eventos recientes
 # MAGIC - 🌍 **Falta contexto** - sin datos de tráfico, industria, eventos
-# MAGIC 
+# MAGIC
 # MAGIC **Modelo:**
 # MAGIC - 🔴 **Desbalance de clases** en categorías extremas
 # MAGIC - 🔴 **Horizonte de predicción corto** - mejor para 1-6 horas
 # MAGIC - 🔴 **No captura eventos extremos** (olimpiadas, emergencias)
-# MAGIC 
+# MAGIC
 # MAGIC **Técnicas:**
 # MAGIC - ⏳ **Sin validación cruzada temporal**
 # MAGIC - ⏳ **Sin ajuste de hiperparámetros** (Grid Search)
 # MAGIC - ⏳ **No se probaron modelos más avanzados** (XGBoost, LSTM)
-# MAGIC 
+# MAGIC
 # MAGIC ---
-# MAGIC 
+# MAGIC
 # MAGIC ### 🚀 4. Mejoras Propuestas
-# MAGIC 
+# MAGIC
 # MAGIC #### **A. Datos y Features:**
-# MAGIC 
+# MAGIC
 # MAGIC 1. **Incorporar más fuentes:**
 # MAGIC    - Datos de tráfico vehicular en tiempo real
 # MAGIC    - Actividad industrial (emisiones, producción)
 # MAGIC    - Eventos especiales (festivales, construcción, olimpiadas)
 # MAGIC    - Datos satelitales (AOD - Aerosol Optical Depth)
-# MAGIC 
+# MAGIC
 # MAGIC 2. **Múltiples ubicaciones:**
 # MAGIC    - Entrenar con datos de varias ciudades
 # MAGIC    - Transfer learning entre ubicaciones
 # MAGIC    - Modelar dispersión espacial
-# MAGIC 
+# MAGIC
 # MAGIC 3. **Features avanzadas:**
 # MAGIC    - Componentes de Fourier para estacionalidad
 # MAGIC    - Ventanas adaptativas (no fijas de 24h)
 # MAGIC    - Interacciones no lineales (polinomios)
 # MAGIC    - Features de red neuronal (embeddings temporales)
-# MAGIC 
+# MAGIC
 # MAGIC #### **B. Modelado:**
-# MAGIC 
+# MAGIC
 # MAGIC 1. **Modelos más sofisticados:**
 # MAGIC    - **XGBoost** - mejor que GBT en muchos casos
 # MAGIC    - **LightGBM** - más rápido, mejor con categorías
 # MAGIC    - **LSTM/GRU** - capturan dependencias temporales largas
 # MAGIC    - **Prophet** - específico para series temporales
 # MAGIC    - **Ensemble** - combinar múltiples modelos (stacking)
-# MAGIC 
+# MAGIC
 # MAGIC 2. **Ajuste de hiperparámetros:**
 # MAGIC    - Grid Search con validación cruzada temporal
 # MAGIC    - Bayesian Optimization (más eficiente)
 # MAGIC    - Random Search como baseline
 # MAGIC    - Auto-tuning con Optuna o Hyperopt
-# MAGIC 
+# MAGIC
 # MAGIC 3. **Técnicas avanzadas:**
 # MAGIC    - **Weighted loss** para clases desbalanceadas
 # MAGIC    - **SMOTE** para generar muestras sintéticas
 # MAGIC    - **Attention mechanisms** para destacar features importantes
 # MAGIC    - **Multi-task learning** (predecir PM2.5 + categoría simultáneamente)
-# MAGIC 
+# MAGIC
 # MAGIC #### **C. Evaluación:**
-# MAGIC 
+# MAGIC
 # MAGIC 1. **Validación robusta:**
 # MAGIC    - Time Series Cross-Validation (ventanas deslizantes)
 # MAGIC    - Validación en múltiples horizontes (1h, 6h, 12h, 24h)
 # MAGIC    - Evaluación por estación del año
 # MAGIC    - Análisis de residuos (homocedasticidad)
-# MAGIC 
+# MAGIC
 # MAGIC 2. **Métricas adicionales:**
 # MAGIC    - **MAPE** (Mean Absolute Percentage Error)
 # MAGIC    - **Directional Accuracy** (¿predice correctamente subida/bajada?)
 # MAGIC    - **Peak Detection** (¿detecta bien valores extremos?)
 # MAGIC    - **Quantile Loss** (para predicciones probabilísticas)
-# MAGIC 
+# MAGIC
 # MAGIC 3. **Análisis de errores:**
 # MAGIC    - Errores por rango de PM2.5
 # MAGIC    - Errores por hora del día / estación
 # MAGIC    - Identificar casos problemáticos
 # MAGIC    - Análisis de incertidumbre (predicción de intervalos)
-# MAGIC 
+# MAGIC
 # MAGIC #### **D. Producción:**
-# MAGIC 
+# MAGIC
 # MAGIC 1. **Sistema en tiempo real:**
 # MAGIC    - Ingesta de datos streaming (Kafka, Kinesis)
 # MAGIC    - Predicciones cada hora automáticamente
 # MAGIC    - API REST para consultas (FastAPI, Flask)
 # MAGIC    - Cache de predicciones (Redis)
-# MAGIC 
+# MAGIC
 # MAGIC 2. **Monitoreo y alertas:**
 # MAGIC    - Sistema de alertas cuando AQI > umbral
 # MAGIC    - Dashboard interactivo (Plotly Dash, Streamlit)
 # MAGIC    - Notificaciones push/email
 # MAGIC    - Integración con apps móviles
-# MAGIC 
+# MAGIC
 # MAGIC 3. **MLOps:**
 # MAGIC    - Reentrenamiento automático (semanal/mensual)
 # MAGIC    - Monitoreo de data drift
 # MAGIC    - A/B testing de modelos
 # MAGIC    - Versionado de modelos (MLflow Model Registry)
 # MAGIC    - CI/CD para despliegue automático
-# MAGIC 
+# MAGIC
 # MAGIC 4. **Escalabilidad:**
 # MAGIC    - Procesamiento distribuido con Spark
 # MAGIC    - Inferencia batch para múltiples ubicaciones
 # MAGIC    - Optimización de latencia (<100ms por predicción)
 # MAGIC    - Despliegue en contenedores (Docker, Kubernetes)
-# MAGIC 
+# MAGIC
 # MAGIC ---
-# MAGIC 
+# MAGIC
 # MAGIC ### 💡 5. Impacto y Aplicaciones
-# MAGIC 
+# MAGIC
 # MAGIC **Beneficios del Sistema:**
-# MAGIC 
+# MAGIC
 # MAGIC 1. **Salud Pública:**
 # MAGIC    - Alertas tempranas para grupos vulnerables
 # MAGIC    - Recomendaciones de actividades al aire libre
 # MAGIC    - Planificación de cierres de escuelas/empresas
-# MAGIC 
+# MAGIC
 # MAGIC 2. **Políticas Públicas:**
 # MAGIC    - Evidencia para restricciones vehiculares
 # MAGIC    - Identificación de fuentes de contaminación
 # MAGIC    - Evaluación de efectividad de medidas
-# MAGIC 
+# MAGIC
 # MAGIC 3. **Optimización de Recursos:**
 # MAGIC    - Ruteo de vehículos evitando zonas contaminadas
 # MAGIC    - Planificación de eventos masivos
 # MAGIC    - Gestión de sistemas de ventilación en edificios
-# MAGIC 
+# MAGIC
 # MAGIC **Casos de Uso Extendidos:**
 # MAGIC - Integración con apps de mapas (Google Maps, Waze)
 # MAGIC - Recomendación de rutas saludables para corredores
 # MAGIC - Sistemas de ventilación inteligentes en hogares
 # MAGIC - Seguro de salud basado en exposición a contaminación
-# MAGIC 
+# MAGIC
 # MAGIC ---
-# MAGIC 
+# MAGIC
 # MAGIC ### 📈 6. Comparación con Estado del Arte
-# MAGIC 
+# MAGIC
 # MAGIC **Nuestro Modelo vs Literatura:**
-# MAGIC 
+# MAGIC
 # MAGIC | Aspecto | Nuestro Proyecto | Estado del Arte | Gap |
 # MAGIC |---------|------------------|-----------------|-----|
 # MAGIC | R² | ~0.80-0.85 | 0.85-0.92 | Bueno |
@@ -742,82 +734,82 @@ print("="*70)
 # MAGIC | Horizonte | 1-6h | 1-48h | Mejorable |
 # MAGIC | Ubicaciones | 1 | 10-100+ | Limitado |
 # MAGIC | Modelos | RF, GBT | RF, XGB, LSTM, Ensemble | Parcial |
-# MAGIC 
+# MAGIC
 # MAGIC **Ventajas de nuestro enfoque:**
 # MAGIC - ✅ Pipeline completo y reproducible
 # MAGIC - ✅ MLflow tracking bien documentado
 # MAGIC - ✅ Feature engineering exhaustivo
 # MAGIC - ✅ Interpretabilidad (feature importance)
-# MAGIC 
+# MAGIC
 # MAGIC **Áreas de mejora vs SOTA:**
 # MAGIC - ⬆️ Modelos deep learning (LSTM, Transformers)
 # MAGIC - ⬆️ Más datos y fuentes externas
 # MAGIC - ⬆️ Predicciones probabilísticas (intervalos de confianza)
 # MAGIC - ⬆️ Multi-pollutant joint modeling
-# MAGIC 
+# MAGIC
 # MAGIC ---
-# MAGIC 
+# MAGIC
 # MAGIC ### ✅ 7. Conclusiones
-# MAGIC 
+# MAGIC
 # MAGIC **Logros del Proyecto:**
-# MAGIC 
+# MAGIC
 # MAGIC 1. ✅ **Pipeline completo de ML** end-to-end
 # MAGIC 2. ✅ **Feature engineering robusto** con 44 features
 # MAGIC 3. ✅ **Múltiples modelos** (regresión + clasificación)
 # MAGIC 4. ✅ **MLflow tracking** completo y organizado
 # MAGIC 5. ✅ **Resultados competitivos** (R² > 0.80)
 # MAGIC 6. ✅ **Código reproducible** y bien documentado
-# MAGIC 
+# MAGIC
 # MAGIC **Aprendizajes Clave:**
-# MAGIC 
+# MAGIC
 # MAGIC - 🎯 **Variables lag son cruciales** en series temporales
 # MAGIC - 🎯 **Split temporal es obligatorio** (no aleatorio)
 # MAGIC - 🎯 **Feature engineering > modelo complejo** (80% del valor)
 # MAGIC - 🎯 **MLflow facilita experimentación** y reproducibilidad
 # MAGIC - 🎯 **Baseline simple es buen benchmark** antes de modelos complejos
-# MAGIC 
+# MAGIC
 # MAGIC **Próximos Pasos Inmediatos:**
-# MAGIC 
+# MAGIC
 # MAGIC 1. 🔄 Probar XGBoost (mejor que GBT típicamente)
 # MAGIC 2. 🔄 Grid Search para optimizar hiperparámetros
 # MAGIC 3. 🔄 Implementar validación cruzada temporal
 # MAGIC 4. 🔄 Agregar datos de más ciudades
 # MAGIC 5. 🔄 Crear dashboard interactivo
-# MAGIC 
+# MAGIC
 # MAGIC **Viabilidad de Producción:**
-# MAGIC 
+# MAGIC
 # MAGIC - ✅ Modelo listo para despliegue
 # MAGIC - ✅ Latencia aceptable (<1s por predicción)
 # MAGIC - ✅ Escalable a múltiples ubicaciones
 # MAGIC - ⚠️ Requiere pipeline de datos en tiempo real
 # MAGIC - ⚠️ Necesita monitoreo continuo de performance
-# MAGIC 
+# MAGIC
 # MAGIC ---
-# MAGIC 
+# MAGIC
 # MAGIC ### 🎓 Contribución Académica
-# MAGIC 
+# MAGIC
 # MAGIC Este proyecto demuestra:
-# MAGIC 
+# MAGIC
 # MAGIC 1. **Dominio técnico:** Spark, MLlib/sklearn, MLflow, feature engineering
 # MAGIC 2. **Pensamiento crítico:** Identificación de limitaciones y propuestas realistas
 # MAGIC 3. **Metodología rigurosa:** Split temporal, tracking de experimentos, evaluación multi-métrica
 # MAGIC 4. **Visión práctica:** Consideraciones de producción y escalabilidad
 # MAGIC 5. **Impacto social:** Aplicación con beneficio real en salud pública
-# MAGIC 
+# MAGIC
 # MAGIC **El proyecto está completo, funcional y listo para presentación o extensión futura.**
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ---
-# MAGIC 
+# MAGIC
 # MAGIC ## 🎉 FIN DEL PROYECTO
-# MAGIC 
+# MAGIC
 # MAGIC **Todos los requisitos cumplidos:**
 # MAGIC - ✅ Data ingestion & cleaning
 # MAGIC - ✅ Transformations & aggregations  
 # MAGIC - ✅ Model training + evaluation
 # MAGIC - ✅ Experiment tracking with MLflow
 # MAGIC - ✅ Discussion
-# MAGIC 
+# MAGIC
 # MAGIC **Gracias por seguir el proyecto! 🚀**
