@@ -1,0 +1,10 @@
+.databricks
+.venv
+tmp
+mlruns
+__pycache__/
+.vscode
+databricks.yml
+.DS_Store
+.ipynb_checkpoints
+*.pyc
