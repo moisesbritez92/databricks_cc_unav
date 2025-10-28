@@ -857,6 +857,27 @@ print(f"Total de features para el modelo: {len(feature_columns)}")
 
 # COMMAND ----------
 
+# 🔥 REDUCIR DATASET PARA EVITAR PROBLEMAS DE PERMISOS EN DATABRICKS COMMUNITY
+# Tomar solo una muestra del 10% (aprox 4,000 registros en lugar de 41,000)
+print("⚠️  Para evitar problemas de permisos en Databricks Community Edition:")
+print("   Se tomará una muestra del 10% del dataset (~4,000 registros)")
+
+# Opción 1: Muestra del 10% (recomendado)
+df_sample = df.sample(withReplacement=False, fraction=0.1, seed=42)
+
+# Opción 2: Si aún tienes problemas, usa muestra del 5% (descomentar siguiente línea)
+# df_sample = df.sample(withReplacement=False, fraction=0.05, seed=42)
+
+# Opción 3: Para testing rápido, limitar a 1000 registros (descomentar siguiente línea)
+# df_sample = df.limit(1000)
+
+print(f"\n📊 Dataset original: {df.count():,} registros")
+print(f"📊 Dataset muestreado: {df_sample.count():,} registros")
+print(f"   Features: {len(feature_columns)}")
+print(f"   Reducción: {(1 - df_sample.count()/df.count())*100:.1f}% menos datos")
+
+# COMMAND ----------
+
 # Vectorización usando UDF (método que funciona sin problemas de permisos)
 from pyspark.ml.linalg import Vectors, VectorUDT
 
@@ -866,13 +887,15 @@ to_vector = F.udf(
     VectorUDT()
 )
 
-df_assembled = df.withColumn(
+# Usar el dataset MUESTREADO
+df_assembled = df_sample.withColumn(
     "features",
     to_vector(F.array(*[F.col(c).cast("double") for c in feature_columns]))
 )
 
 print(f"✅ Features ensambladas exitosamente usando UDF")
 print(f"   Total features: {len(feature_columns)}")
+print(f"   Registros procesados: {df_assembled.count():,}")
 
 # COMMAND ----------
 
