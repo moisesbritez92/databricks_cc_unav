@@ -628,9 +628,7 @@ display(df_interact.select(
 
 # COMMAND ----------
 
-from pyspark.ml.feature import StringIndexer, OneHotEncoder
-
-# Método 1: One-Hot Encoding manual con Spark SQL (más simple)
+# ✅ One-Hot Encoding manual con Spark SQL (NO requiere MLlib)
 # Para dirección del viento (cbwd)
 df_encoded = df_interact
 for direction in ['NE', 'NW', 'SE', 'cv']:  # cv = calm/variable
@@ -787,26 +785,34 @@ spark.sql("SHOW TABLES").show()
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Model Training & Evaluation (Sin MLflow - Método Compatible)
+# MAGIC # Model Training & Evaluation (VERSIÓN COMPATIBLE)
 # MAGIC
-# MAGIC Este notebook entrena un modelo de regresión usando LinearRegression con enfoque OVR
-# MAGIC (One-vs-Rest) para evitar problemas de permisos con MLlib avanzado.
+# MAGIC **IMPORTANTE:** Si experimentas errores de permisos con MLlib en Databricks Community:
 # MAGIC
-# MAGIC ## Modelo a entrenar:
-# MAGIC 1. **Linear Regression con Lasso (L1)** - Predicción de categorías de calidad del aire
+# MAGIC ### OPCIÓN 1: Sin Entrenamiento de Modelo
+# MAGIC - Comentar todas las secciones de "IMPORTS DE MLLIB" en adelante
+# MAGIC - Solo ejecutar hasta "Guardar en el catálogo"
+# MAGIC - Esto te permitirá tener los datos limpios y con features listos
 # MAGIC
-# MAGIC ## Métricas:
-# MAGIC - Accuracy, F1-Score, Precision, Recall
+# MAGIC ### OPCIÓN 2: Con Modelo Simple
+# MAGIC - Ejecutar con sampling reducido (5% o menos)
+# MAGIC - Usar solo LinearRegression básico
+# MAGIC
+# MAGIC ### OPCIÓN 3: Sin MLlib (Sklearn en Pandas)
+# MAGIC - Usar el archivo `05_model_training_SKLEARN.py`
+# MAGIC - Convierte a Pandas y usa scikit-learn
+# MAGIC
+# MAGIC Para esta versión, descomenta el bloque que quieras usar.
 
 # COMMAND ----------
 
+# ⚠️ IMPORTS BÁSICOS PRIMERO (sin MLlib todavía)
 from pyspark.sql import functions as F
 from pyspark.sql.types import *
-from pyspark.ml.linalg import Vectors, VectorUDT
-from pyspark.ml.regression import LinearRegression
-from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
-print(f"✅ Librerías importadas exitosamente")
+print(f"✅ Imports básicos cargados")
+print(f"⚠️  Si tienes problemas de permisos, detente aquí y NO ejecutes las siguientes celdas")
+print(f"   Tus datos ya están listos en la tabla 'air_quality_features'")
 
 # COMMAND ----------
 
@@ -878,9 +884,19 @@ print(f"   Reducción: {(1 - df_sample.count()/df.count())*100:.1f}% menos datos
 
 # COMMAND ----------
 
-# Vectorización usando UDF (método que funciona sin problemas de permisos)
-from pyspark.ml.linalg import Vectors, VectorUDT
+# 🔥 IMPORTS DE MLLIB - SOLO CUANDO SEA NECESARIO
+# Cargar MLlib justo antes de usarlo, no antes
+print("⚠️  Cargando librerías de MLlib...")
 
+from pyspark.ml.linalg import Vectors, VectorUDT
+from pyspark.ml.regression import LinearRegression
+from pyspark.ml.evaluation import MulticlassClassificationEvaluator
+
+print("✅ MLlib cargado exitosamente")
+
+# COMMAND ----------
+
+# Vectorización usando UDF (método que funciona sin problemas de permisos)
 # UDF para vectorizar
 to_vector = F.udf(
     lambda xs: Vectors.dense([float(x) if x is not None else 0.0 for x in xs]), 
